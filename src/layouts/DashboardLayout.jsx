@@ -15,7 +15,7 @@ const DashboardLayout = () => {
             <aside className={style.sidebar}>
                 <div className={style.logo}>
                     <Brain size={32} color="var(--primary-color)" />
-                    <h1>EduAssist</h1>
+                    <h1>Team Faisal</h1>
                 </div>
                 <nav className={style.nav}>
                     <NavLink to="/classrooms" className={({ isActive }) => isActive ? `${style.link} ${style.active}` : style.link}>

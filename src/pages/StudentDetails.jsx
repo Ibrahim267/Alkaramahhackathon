@@ -10,8 +10,11 @@ import ReportCardSection from '../components/ReportCardSection';
 const StudentDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const student = students.find(s => s.id === parseInt(id));
+    const studentData = students.find(s => s.id === parseInt(id));
+    const [student, setStudent] = useState(studentData);
     const [activeTab, setActiveTab] = useState('aet');
+    const [isEditing, setIsEditing] = useState(false);
+    const [editName, setEditName] = useState(studentData?.name || '');
 
     if (!student) {
         return <div>Student not found</div>;
@@ -66,11 +69,29 @@ const StudentDetails = () => {
                         {student.name.charAt(0)}
                     </div>
                     <div>
-                        <h1 style={{ marginBottom: '0.25rem' }}>{student.name}</h1>
+                        {isEditing ? (
+                            <input
+                                value={editName}
+                                onChange={(e) => setEditName(e.target.value)}
+                                style={{ fontSize: '2em', fontWeight: 'bold', marginBottom: '0.25rem', padding: '0.25rem', border: '1px solid #ccc', borderRadius: '4px' }}
+                            />
+                        ) : (
+                            <h1 style={{ marginBottom: '0.25rem' }}>{student.name}</h1>
+                        )}
                         <p style={{ color: '#6b7280' }}>{student.diagnosis} • Age {student.age}</p>
                     </div>
                 </div>
-                <button style={{ background: 'white', color: '#ef4444', border: '1px solid #fecaca' }}>Edit Profile</button>
+                {isEditing ? (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <button onClick={() => {
+                            setStudent({ ...student, name: editName });
+                            setIsEditing(false);
+                        }} style={{ background: '#dcfce7', color: '#16a34a', border: '1px solid #86efac' }}>Save</button>
+                        <button onClick={() => setIsEditing(false)} style={{ background: '#fee2e2', color: '#ef4444', border: '1px solid #fecaca' }}>Cancel</button>
+                    </div>
+                ) : (
+                    <button onClick={() => setIsEditing(true)} style={{ background: 'white', color: '#4f46e5', border: '1px solid #e0e7ff' }}>Edit Profile</button>
+                )}
             </div>
 
             <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', marginBottom: '2rem' }}>
