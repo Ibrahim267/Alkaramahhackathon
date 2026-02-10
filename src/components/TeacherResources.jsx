@@ -6,7 +6,7 @@ const TeacherResources = () => {
     // Categories State
     const [categories, setCategories] = useState([
         { id: 'books', name: 'Books' },
-        { id: 'aet', name: 'AET Data' },
+        { id: 'aet', name: 'AET Content' },
         { id: 'presentations', name: 'Presentations' },
         { id: 'simplifier', name: 'Text Simplifier', isSystem: true } // System category
     ]);
@@ -31,6 +31,11 @@ const TeacherResources = () => {
     const [inputText, setInputText] = useState('');
     const [simplifiedText, setSimplifiedText] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
+
+    // Category Notes State
+    const [categoryNotes, setCategoryNotes] = useState({
+        aet: "Record AET specific observations or curriculum alignment notes here."
+    });
 
     // --- Category Management ---
     const handleAddCategory = () => {
@@ -112,6 +117,17 @@ const TeacherResources = () => {
             setSimplifiedText(sentences.map(s => s.trim()));
             setIsProcessing(false);
         }, 800);
+    };
+
+    const handleSimplifierFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                setInputText(e.target.result || "");
+            };
+            reader.readAsText(file);
+        }
     };
 
 
@@ -235,13 +251,33 @@ const TeacherResources = () => {
                         <FileText size={20} />
                         Input Text
                     </h3>
+
+                    <div style={{ marginBottom: '1rem', padding: '1.25rem', border: '2px dashed #e5e7eb', borderRadius: '0.5rem', textAlign: 'center' }}>
+                        <input
+                            type="file"
+                            id="simplifierFileUpload"
+                            style={{ display: 'none' }}
+                            onChange={handleSimplifierFileUpload}
+                            accept=".txt,.md,.doc,.docx"
+                        />
+                        <label
+                            htmlFor="simplifierFileUpload"
+                            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}
+                        >
+                            <div style={{ background: '#eff6ff', padding: '0.5rem', borderRadius: '50%', color: '#3b82f6' }}>
+                                <Upload size={20} />
+                            </div>
+                            <span style={{ color: '#4b5563', fontWeight: 500, fontSize: '0.875rem' }}>Upload file to simplify</span>
+                        </label>
+                    </div>
+
                     <textarea
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Paste text here to simplify..."
+                        placeholder="Or paste text here..."
                         style={{
                             width: '100%',
-                            height: '300px',
+                            height: '220px',
                             padding: '1rem',
                             borderRadius: '0.5rem',
                             border: '1px solid #e5e7eb',
@@ -332,6 +368,28 @@ const TeacherResources = () => {
                         Upload File
                     </label>
                 </div>
+            </div>
+
+            {/* Notes Section for AET Content or any category */}
+            <div style={{ marginBottom: '2rem', padding: '1rem', background: '#fefce8', border: '1px solid #fef08a', borderRadius: '0.5rem' }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', color: '#854d0e' }}>
+                    <Check size={18} />
+                    Category Notes
+                </h4>
+                <textarea
+                    value={categoryNotes[activeCategory.id] || ''}
+                    onChange={(e) => setCategoryNotes({ ...categoryNotes, [activeCategory.id]: e.target.value })}
+                    placeholder="Add notes for this category..."
+                    style={{
+                        width: '100%',
+                        height: '100px',
+                        padding: '0.75rem',
+                        borderRadius: '0.375rem',
+                        border: '1px solid #fde047',
+                        background: 'white',
+                        resize: 'vertical'
+                    }}
+                />
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

@@ -16,10 +16,10 @@ export const students = [
   },
   {
     id: 2,
-    name: "Sara Khan",
+    name: "Katie Ron",
     age: 8,
     diagnosis: "Autism Level 1",
-    guardian: "Yusuf Khan",
+    guardian: "Fatima Ron",
     notes: "Sensitive to loud noises.",
     classroomId: 1,
   },
