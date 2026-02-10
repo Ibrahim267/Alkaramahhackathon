@@ -36,6 +36,8 @@ const TeacherResources = () => {
     const [categoryNotes, setCategoryNotes] = useState({
         aet: "Record AET specific observations or curriculum alignment notes here."
     });
+    const [isSavingNotes, setIsSavingNotes] = useState(false);
+    const [showSavedMessage, setShowSavedMessage] = useState(false);
 
     // --- Category Management ---
     const handleAddCategory = () => {
@@ -128,6 +130,16 @@ const TeacherResources = () => {
             };
             reader.readAsText(file);
         }
+    };
+
+    const handleSaveCategoryNotes = () => {
+        setIsSavingNotes(true);
+        // Simulate a save operation
+        setTimeout(() => {
+            setIsSavingNotes(false);
+            setShowSavedMessage(true);
+            setTimeout(() => setShowSavedMessage(false), 2000);
+        }, 600);
     };
 
 
@@ -387,9 +399,29 @@ const TeacherResources = () => {
                         borderRadius: '0.375rem',
                         border: '1px solid #fde047',
                         background: 'white',
-                        resize: 'vertical'
+                        resize: 'vertical',
+                        marginBottom: '0.75rem'
                     }}
                 />
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <button
+                        onClick={handleSaveCategoryNotes}
+                        disabled={isSavingNotes}
+                        style={{ padding: '0.5rem 1.5rem', background: '#eab308', color: 'white', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                    >
+                        {isSavingNotes ? <RefreshCw size={16} className="spin" /> : <Save size={16} />}
+                        {isSavingNotes ? 'Saving...' : 'Save Notes'}
+                    </button>
+                    {showSavedMessage && (
+                        <motion.span
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            style={{ color: '#16a34a', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.25rem' }}
+                        >
+                            <Check size={16} /> Saved!
+                        </motion.span>
+                    )}
+                </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
