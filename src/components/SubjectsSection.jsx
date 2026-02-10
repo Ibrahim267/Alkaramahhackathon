@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { subjects as initialSubjects } from '../data/mockData';
 import { Plus, Trash2, Save, BookOpen } from 'lucide-react';
+import NotesList from './NotesList';
 
 const SubjectsSection = () => {
-    const [subjects, setSubjects] = useState(initialSubjects.map(s => ({ name: s, notes: '' })));
+    // Initialize subjects with empty notes array
+    const [subjects, setSubjects] = useState(initialSubjects.map(s => ({ name: s, notes: [] })));
     const [newSubject, setNewSubject] = useState('');
     const [activeSubjectIndex, setActiveSubjectIndex] = useState(0);
 
     const handleAddSubject = () => {
         if (!newSubject.trim()) return;
-        setSubjects([...subjects, { name: newSubject, notes: '' }]);
+        setSubjects([...subjects, { name: newSubject, notes: [] }]);
         setNewSubject('');
     };
 
@@ -17,19 +19,18 @@ const SubjectsSection = () => {
         e.stopPropagation();
         const newSubjects = subjects.filter((_, i) => i !== index);
         setSubjects(newSubjects);
-        if (activeSubjectIndex >= newSubjects.length) {
-            setActiveSubjectIndex(Math.max(0, newSubjects.length - 1));
+        // Adjust active index if needed
+        if (index === activeSubjectIndex) {
+            setActiveSubjectIndex(Math.max(0, index - 1));
+        } else if (index < activeSubjectIndex) {
+            setActiveSubjectIndex(activeSubjectIndex - 1);
         }
     };
 
-    const handleNoteChange = (e) => {
+    const handleUpdateNotes = (updatedNotes) => {
         const updatedSubjects = [...subjects];
-        updatedSubjects[activeSubjectIndex].notes = e.target.value;
+        updatedSubjects[activeSubjectIndex].notes = updatedNotes;
         setSubjects(updatedSubjects);
-    };
-
-    const handleSaveNotes = () => {
-        alert(`Notes saved for ${subjects[activeSubjectIndex].name}`);
     };
 
     return (
@@ -103,28 +104,11 @@ const SubjectsSection = () => {
 
             <div className="card">
                 {subjects.length > 0 ? (
-                    <>
-                        <h3 style={{ marginBottom: '1rem' }}>Notes for {subjects[activeSubjectIndex].name}</h3>
-                        <textarea
-                            value={subjects[activeSubjectIndex].notes}
-                            onChange={handleNoteChange}
-                            placeholder={`Enter curriculum notes, progress, or lesson plans for ${subjects[activeSubjectIndex].name}...`}
-                            style={{
-                                width: '100%',
-                                height: '300px',
-                                padding: '1rem',
-                                borderRadius: '0.5rem',
-                                border: '1px solid #e5e7eb',
-                                resize: 'vertical',
-                                fontFamily: 'inherit',
-                                marginBottom: '1rem'
-                            }}
-                        />
-                        <button onClick={handleSaveNotes} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <Save size={18} />
-                            Save Notes
-                        </button>
-                    </>
+                    <NotesList
+                        title={`Notes for ${subjects[activeSubjectIndex].name}`}
+                        notes={subjects[activeSubjectIndex].notes || []}
+                        onUpdate={handleUpdateNotes}
+                    />
                 ) : (
                     <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#9ca3af' }}>
                         <p>Select or add a subject to view notes</p>

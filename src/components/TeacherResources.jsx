@@ -1,94 +1,244 @@
 import React, { useState } from 'react';
-import { Upload, FileText, ArrowRight, RefreshCw } from 'lucide-react';
+import { Upload, FileText, ArrowRight, RefreshCw, Plus, Folder, Trash2, Edit2, Printer, X, Save, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const TeacherResources = () => {
+    // Categories State
+    const [categories, setCategories] = useState([
+        { id: 'books', name: 'Books' },
+        { id: 'aet', name: 'AET Data' },
+        { id: 'presentations', name: 'Presentations' },
+        { id: 'simplifier', name: 'Text Simplifier', isSystem: true } // System category
+    ]);
+
+    // Files State (Mock Database)
+    const [files, setFiles] = useState({
+        books: [
+            { id: 1, name: 'Autism Guide 101.pdf', type: 'PDF', date: '2023-10-25' },
+            { id: 2, name: 'Sensory Needs.docx', type: 'DOCX', date: '2023-11-02' }
+        ],
+        aet: [],
+        presentations: []
+    });
+
+    const [activeCategory, setActiveCategory] = useState(null); // 'null' means showing category list
+    const [isEditingCategory, setIsEditingCategory] = useState(null);
+    const [editCategoryName, setEditCategoryName] = useState('');
+    const [newCategoryName, setNewCategoryName] = useState('');
+    const [isAddingCategory, setIsAddingCategory] = useState(false);
+
+    // Text Simplifier State
     const [inputText, setInputText] = useState('');
     const [simplifiedText, setSimplifiedText] = useState([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
+    // --- Category Management ---
+    const handleAddCategory = () => {
+        if (!newCategoryName.trim()) return;
+        const newId = newCategoryName.toLowerCase().replace(/\s+/g, '-');
+        setCategories([...categories, { id: newId, name: newCategoryName }]);
+        setFiles(prev => ({ ...prev, [newId]: [] })); // Initialize file storage for new category
+        setNewCategoryName('');
+        setIsAddingCategory(false);
+    };
+
+    const handleDeleteCategory = (e, id) => {
+        e.stopPropagation();
+        if (window.confirm('Delete this category and all its files?')) {
+            setCategories(categories.filter(c => c.id !== id));
+            const newFiles = { ...files };
+            delete newFiles[id];
+            setFiles(newFiles);
+        }
+    };
+
+    const startEditingCategory = (e, cat) => {
+        e.stopPropagation();
+        setIsEditingCategory(cat.id);
+        setEditCategoryName(cat.name);
+    };
+
+    const saveCategoryEdit = (e) => {
+        e.stopPropagation();
+        if (!editCategoryName.trim()) return;
+        setCategories(categories.map(c =>
+            c.id === isEditingCategory ? { ...c, name: editCategoryName } : c
+        ));
+        setIsEditingCategory(null);
+    };
+
+    const cancelCategoryEdit = (e) => {
+        e.stopPropagation();
+        setIsEditingCategory(null);
+    };
+
+    // --- File Management ---
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file && activeCategory) {
+            const newFile = {
+                id: Date.now(),
+                name: file.name,
+                type: file.name.split('.').pop().toUpperCase(),
+                date: new Date().toLocaleDateString()
+            };
+            setFiles(prev => ({
+                ...prev,
+                [activeCategory.id]: [...(prev[activeCategory.id] || []), newFile]
+            }));
+        }
+    };
+
+    const handleDeleteFile = (fileId) => {
+        if (window.confirm('Delete this file?')) {
+            setFiles(prev => ({
+                ...prev,
+                [activeCategory.id]: prev[activeCategory.id].filter(f => f.id !== fileId)
+            }));
+        }
+    };
+
+    const handlePrintFile = (file) => {
+        alert(`Printing ${file.name}...`);
+        window.print();
+    };
+
+    // --- Text Simplifier Logic ---
     const handleSimplify = () => {
         if (!inputText.trim()) return;
-
         setIsProcessing(true);
-
-        // Simulating processing delay
         setTimeout(() => {
-            // Logic: Split by periods, exclamation marks, question marks, or new lines.
-            // Filter out empty strings.
-            const sentences = inputText
-                .split(/([.!?\n]+)/)
-                .reduce((acc, current, idx, arr) => {
-                    if (idx % 2 === 0 && current.trim()) {
-                        let punctuation = arr[idx + 1] || '';
-                        // If the split char was a newline, treat it properly
-                        if (punctuation.includes('\n')) {
-                            acc.push(current.trim());
-                        } else {
-                            acc.push(current.trim() + punctuation);
-                        }
-                    }
-                    return acc;
-                }, [])
-                .filter(s => s.length > 0);
-
-            setSimplifiedText(sentences);
+            const sentences = inputText.match(/[^.!?]+[.!?]+/g) || [inputText];
+            setSimplifiedText(sentences.map(s => s.trim()));
             setIsProcessing(false);
         }, 800);
     };
 
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            // Mock file reading
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setInputText(e.target.result || "Sample text contents from file...");
-            };
-            // For real text files (this is a mock for binary files mostly in browser)
-            // assuming text file for now or just setting dummy text
-            setInputText(`Uploaded content from ${file.name}:\n\nAutism is a developmental disorder. It affects communication and behavior. Autism is known as a "spectrum" disorder because there is wide variation in the type and severity of symptoms people experience.`);
-        }
-    };
 
-    return (
+    // --- Render Views ---
+
+    const renderCategoryGrid = () => (
         <div>
-            <div style={{ marginBottom: '2rem' }}>
-                <h1>Teacher Resources</h1>
-                <p style={{ color: '#6b7280' }}>Upload documents or text to simplify for students</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div>
+                    <h1>Resource Hub</h1>
+                    <p style={{ color: '#6b7280' }}>Manage your educational materials</p>
+                </div>
+                <button onClick={() => setIsAddingCategory(true)} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Plus size={20} />
+                    New Category
+                </button>
             </div>
 
+            {isAddingCategory && (
+                <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="card"
+                    style={{ marginBottom: '2rem', border: '2px solid #4f46e5' }}
+                >
+                    <h3 style={{ marginBottom: '1rem' }}>Create New Category</h3>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <input
+                            type="text"
+                            placeholder="Category Name"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            style={{ flex: 1, padding: '0.5rem', borderRadius: '0.375rem', border: '1px solid #d1d5db' }}
+                            autoFocus
+                        />
+                        <button onClick={handleAddCategory}>Create</button>
+                        <button onClick={() => setIsAddingCategory(false)} style={{ background: '#f3f4f6', color: '#374151' }}>Cancel</button>
+                    </div>
+                </motion.div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '1.5rem' }}>
+                {categories.map((cat, index) => (
+                    <motion.div
+                        key={cat.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="card"
+                        style={{
+                            cursor: 'pointer',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            padding: '2rem',
+                            borderTop: `4px solid ${cat.id === 'simplifier' ? '#10b981' : '#4f46e5'}`,
+                            position: 'relative'
+                        }}
+                        onClick={() => setActiveCategory(cat)}
+                        whileHover={{ y: -5, boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)' }}
+                    >
+                        {isEditingCategory === cat.id ? (
+                            <div onClick={(e) => e.stopPropagation()} style={{ width: '100%' }}>
+                                <input
+                                    type="text"
+                                    value={editCategoryName}
+                                    onChange={(e) => setEditCategoryName(e.target.value)}
+                                    style={{ width: '100%', marginBottom: '0.5rem', padding: '0.5rem', textAlign: 'center' }}
+                                    autoFocus
+                                />
+                                <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                                    <button onClick={saveCategoryEdit} style={{ padding: '0.25rem', background: '#dcfce7', color: '#16a34a' }}><Check size={16} /></button>
+                                    <button onClick={cancelCategoryEdit} style={{ padding: '0.25rem', background: '#fee2e2', color: '#ef4444' }}><X size={16} /></button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                {cat.id === 'simplifier' ? (
+                                    <RefreshCw size={48} color="#10b981" style={{ marginBottom: '1rem', opacity: 0.8 }} />
+                                ) : (
+                                    <Folder size={48} color="#4f46e5" style={{ marginBottom: '1rem', opacity: 0.8 }} />
+                                )}
+                                <h3 style={{ fontSize: '1.25rem' }}>{cat.name}</h3>
+                                {cat.id !== 'simplifier' && (
+                                    <p style={{ color: '#6b7280', fontSize: '0.875rem' }}>
+                                        {files[cat.id]?.length || 0} Files
+                                    </p>
+                                )}
+
+                                {!cat.isSystem && (
+                                    <div style={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', gap: '0.25rem' }}>
+                                        <button
+                                            onClick={(e) => startEditingCategory(e, cat)}
+                                            style={{ padding: '0.25rem', background: 'transparent', color: '#9ca3af' }}
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={(e) => handleDeleteCategory(e, cat.id)}
+                                            style={{ padding: '0.25rem', background: 'transparent', color: '#ef4444' }}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </motion.div>
+                ))}
+            </div>
+        </div>
+    );
+
+    const renderTextSimplifier = () => (
+        <div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
                 <div className="card">
                     <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <FileText size={20} />
                         Input Text
                     </h3>
-
-                    <div style={{ marginBottom: '1rem', padding: '1.5rem', border: '2px dashed #e5e7eb', borderRadius: '0.5rem', textAlign: 'center' }}>
-                        <input
-                            type="file"
-                            id="fileUpload"
-                            style={{ display: 'none' }}
-                            onChange={handleFileUpload}
-                            accept=".txt,.md"
-                        />
-                        <label
-                            htmlFor="fileUpload"
-                            style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}
-                        >
-                            <div style={{ background: '#eff6ff', padding: '0.75rem', borderRadius: '50%', color: '#3b82f6' }}>
-                                <Upload size={24} />
-                            </div>
-                            <span style={{ color: '#4b5563', fontWeight: 500 }}>Click to upload file</span>
-                            <span style={{ color: '#9ca3af', fontSize: '0.875rem' }}>TXT or MD files supported</span>
-                        </label>
-                    </div>
-
                     <textarea
                         value={inputText}
                         onChange={(e) => setInputText(e.target.value)}
-                        placeholder="Or paste your text here..."
+                        placeholder="Paste text here to simplify..."
                         style={{
                             width: '100%',
                             height: '300px',
@@ -100,7 +250,6 @@ const TeacherResources = () => {
                             fontSize: '1rem'
                         }}
                     />
-
                     <button
                         onClick={handleSimplify}
                         disabled={isProcessing || !inputText}
@@ -121,7 +270,6 @@ const TeacherResources = () => {
 
                 <div className="card" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
                     <h3 style={{ marginBottom: '1rem', color: '#15803d' }}>Simplified Output</h3>
-
                     {simplifiedText.length > 0 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                             {simplifiedText.map((sentence, index) => (
@@ -152,14 +300,95 @@ const TeacherResources = () => {
                 </div>
             </div>
             <style>{`
-                .spin {
-                    animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                    from { transform: rotate(0deg); }
-                    to { transform: rotate(360deg); }
-                }
+                .spin { animation: spin 1s linear infinite; }
+                @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             `}</style>
+        </div>
+    );
+
+    const renderFileCategory = () => (
+        <div className="card">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <Folder size={32} color="#4f46e5" />
+                    <div>
+                        <h2 style={{ margin: 0 }}>{activeCategory.name}</h2>
+                        <p style={{ margin: 0, color: '#6b7280' }}>Category Manager</p>
+                    </div>
+                </div>
+                <div style={{ position: 'relative' }}>
+                    <input
+                        type="file"
+                        id="category-upload"
+                        style={{ display: 'none' }}
+                        onChange={handleFileUpload}
+                    />
+                    <label
+                        htmlFor="category-upload"
+                        className="btn"
+                        style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#4f46e5', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem' }}
+                    >
+                        <Upload size={20} />
+                        Upload File
+                    </label>
+                </div>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                {(files[activeCategory.id] || []).length === 0 ? (
+                    <div style={{ padding: '4rem', textAlign: 'center', color: '#9ca3af', border: '2px dashed #e5e7eb', borderRadius: '0.5rem' }}>
+                        <Upload size={48} style={{ marginBottom: '1rem', opacity: 0.5 }} />
+                        <p>No files in this category yet.</p>
+                        <p style={{ fontSize: '0.875rem' }}>Upload PDFs, Word docs, or images.</p>
+                    </div>
+                ) : (
+                    (files[activeCategory.id] || []).map(file => (
+                        <div key={file.id} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '1rem',
+                            background: '#f9fafb',
+                            borderRadius: '0.5rem',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                                <FileText size={24} color="#6b7280" />
+                                <div>
+                                    <p style={{ margin: 0, fontWeight: 500 }}>{file.name}</p>
+                                    <p style={{ margin: 0, fontSize: '0.875rem', color: '#9ca3af' }}>Added: {file.date} • {file.type}</p>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <button onClick={() => handlePrintFile(file)} style={{ padding: '0.5rem', background: 'transparent', color: '#374151' }} title="Print">
+                                    <Printer size={18} />
+                                </button>
+                                <button onClick={() => handleDeleteFile(file.id)} style={{ padding: '0.5rem', background: 'transparent', color: '#ef4444' }} title="Delete">
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    ))
+                )}
+            </div>
+        </div>
+    );
+
+    return (
+        <div>
+            {activeCategory && (
+                <button
+                    onClick={() => setActiveCategory(null)}
+                    style={{ background: 'transparent', color: '#6b7280', padding: 0, display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem', fontSize: '0.875rem' }}
+                >
+                    <ArrowRight size={16} style={{ transform: 'rotate(180deg)' }} />
+                    Back to Resources
+                </button>
+            )}
+
+            {!activeCategory ? renderCategoryGrid() : (
+                activeCategory.id === 'simplifier' ? renderTextSimplifier() : renderFileCategory()
+            )}
         </div>
     );
 };

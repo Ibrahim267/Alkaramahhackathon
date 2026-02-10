@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { aetCategories } from '../data/mockData';
 import { CheckCircle, Circle, Save, Trash2, Edit2, Plus, X, Check } from 'lucide-react';
+import NotesList from './NotesList';
 
 const AETFramework = ({ studentId }) => {
     const [activeCategory, setActiveCategory] = useState(aetCategories[0].id);
-    const [notes, setNotes] = useState('');
+    // Changed notes state to be an object where keys are category IDs and values are arrays of note objects
+    const [notes, setNotes] = useState({});
     const [newItemText, setNewItemText] = useState('');
     const [editingItemId, setEditingItemId] = useState(null);
     const [editingText, setEditingText] = useState('');
@@ -206,26 +208,11 @@ const AETFramework = ({ studentId }) => {
                 </div>
 
                 <div>
-                    <h3 style={{ fontSize: '1rem', marginBottom: '1rem', color: '#4b5563' }}>Teacher Notes</h3>
-                    <textarea
-                        value={notes}
-                        onChange={(e) => setNotes(e.target.value)}
-                        placeholder="Add observations or progress notes here..."
-                        style={{
-                            width: '100%',
-                            height: '150px',
-                            padding: '0.75rem',
-                            borderRadius: '0.5rem',
-                            border: '1px solid #d1d5db',
-                            resize: 'vertical',
-                            marginBottom: '1rem',
-                            fontFamily: 'inherit'
-                        }}
+                    <NotesList
+                        title={`Notes for ${aetCategories.find(c => c.id === activeCategory)?.name}`}
+                        notes={notes[activeCategory] || []}
+                        onUpdate={(updatedNotes) => setNotes(prev => ({ ...prev, [activeCategory]: updatedNotes }))}
                     />
-                    <button onClick={handleAddNote} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                        <Save size={18} />
-                        Save Note
-                    </button>
                 </div>
             </div>
         </div>
